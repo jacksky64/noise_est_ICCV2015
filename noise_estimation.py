@@ -1,10 +1,6 @@
-#!/usr/bin/env python
-# -*- coding:utf-8 -*-
-# Power by Zongsheng Yue 2019-01-07 14:36:55
-
 
 import numpy as np
-from cv2 import imread
+import cv2
 from skimage import img_as_float
 import time
 
@@ -81,22 +77,19 @@ def noise_estimate(im, pch_size=8):
 
 
 if __name__ == '__main__':
-    im = imread('./lena.png')
-    im = img_as_float(im)
+    im_noise = cv2.imread('E:/work/gitLocal/Develop/filtroScopia/MCWNNM-ICCV2017 Multi-channelWeightedNuclearNormMinimization/NoiseClinicImages/Piede.Dat-1.png',cv2.IMREAD_ANYDEPTH|cv2.IMREAD_GRAYSCALE)
+    im_noise = im_noise.astype(np.float32)
+    im_noise = np.sqrt(im_noise)
 
-    noise_level = [5, 15, 20, 30, 40]
-
-    for level in noise_level:
-        sigma = level / 255
-
-        im_noise = im + np.random.randn(*im.shape) * sigma
-
+    for p_size in [4,5,6,7,8, 16]:
         start = time.time()
-        est_level = noise_estimate(im_noise, 8)
+        est_level = noise_estimate(im_noise, p_size)
         end = time.time()
         time_elapsed = end -start
 
-        str_p = "Time: {0:.4f}, Ture Level: {1:6.4f}, Estimated Level: {2:6.4f}"
-        print(str_p.format(time_elapsed, level, est_level*255))
+        str_p = "Time: {0:.4f}, std: {1:6.4f}"
+        print(str_p.format(time_elapsed, est_level))
+
+    print('end test')
 
 
