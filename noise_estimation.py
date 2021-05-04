@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 from skimage import img_as_float
 import time
+import matplotlib.pyplot as plt
 
 def im2patch(im, pch_size, stride=1):
     '''
@@ -59,15 +60,35 @@ def noise_estimate(im, pch_size=8):
         im = np.expand_dims(im, axis=0)
 
     # image to patch
-    pch = im2patch(im, pch_size, 3)  # C x pch_size x pch_size x num_pch tensor
+    pch = im2patch(im, pch_size, 16)  # C x pch_size x pch_size x num_pch tensor
     num_pch = pch.shape[3]
     pch = pch.reshape((-1, num_pch))  # d x num_pch matrix
     d = pch.shape[0]
 
+   # pch = np.ones([32400,64], np.float32)   
+    #mu = pch.mean(axis=1, keepdims=True)  # d x 1
+
+    tm1= cv2.TickMeter()
+    tm1.start()
+    #mean,eigenvectors,eigenvalues = cv2.PCACompute2(pch.transpose(),mean=None)
+    tm1.stop()
+    
+    tm = cv2.TickMeter()
+    #start =cv2.getTickCount()
+    #mu = pch.mean(axis=1, keepdims=True)  # d x 1
+    #XX = np.ones([32400,64], np.float32)   
+
+    tm.start()
     mu = pch.mean(axis=1, keepdims=True)  # d x 1
     X = pch - mu
     sigma_X = np.matmul(X, X.transpose()) / num_pch
     sig_value, _ = np.linalg.eigh(sigma_X)
+    tm.stop()
+
+    tcv = tm.getTimeMilli()
+    tcv1 = tm1.getTimeMilli()
+    print ('tcv {}ms, tcv1 {} ms',tcv/100,tcv1/100)
+
     sig_value.sort()
 
     for ii in range(-1, -d-1, -1):
@@ -77,11 +98,13 @@ def noise_estimate(im, pch_size=8):
 
 
 if __name__ == '__main__':
-    im_noise = cv2.imread('E:/work/gitLocal/Develop/filtroScopia/MCWNNM-ICCV2017 Multi-channelWeightedNuclearNormMinimization/NoiseClinicImages/Piede.Dat-1.png',cv2.IMREAD_ANYDEPTH|cv2.IMREAD_GRAYSCALE)
+    
+    im_noise = cv2.imread('E:\\soliddetectorimages\\musica\\2880x2880ofs256\\Addome_001.Dat.png',cv2.IMREAD_ANYDEPTH|cv2.IMREAD_GRAYSCALE)
     im_noise = im_noise.astype(np.float32)
+    
     im_noise = np.sqrt(im_noise)
 
-    for p_size in [4,5,6,7,8, 16]:
+    for p_size in [8, 16]:
         start = time.time()
         est_level = noise_estimate(im_noise, p_size)
         end = time.time()
